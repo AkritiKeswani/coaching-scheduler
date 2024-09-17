@@ -1,0 +1,35 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  phoneNumber String
+  isCoach   Boolean  @default(false)
+  slots     Slot[]
+  bookings  Booking[]
+}
+
+model Slot {
+  id        Int      @id @default(autoincrement())
+  startTime DateTime
+  coachId   Int
+  coach     User     @relation(fields: [coachId], references: [id])
+  booking   Booking?
+}
+
+model Booking {
+  id        Int      @id @default(autoincrement())
+  slotId    Int      @unique
+  slot      Slot     @relation(fields: [slotId], references: [id])
+  studentId Int
+  student   User     @relation(fields: [studentId], references: [id])
+  satisfaction Int?
+  notes     String?
+}
