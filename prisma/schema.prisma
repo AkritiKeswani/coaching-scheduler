@@ -8,28 +8,31 @@ generator client {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  name      String
-  phoneNumber String
-  isCoach   Boolean  @default(false)
-  slots     Slot[]
-  bookings  Booking[]
+  id              Int       @id @default(autoincrement())
+  name            String
+  email           String    @unique
+  phone           String
+  isCoach         Boolean   @default(false)
+  coachSlots      Slot[]    @relation("CoachSlots")
+  studentBookings Booking[] @relation("StudentBookings")
 }
 
 model Slot {
   id        Int      @id @default(autoincrement())
   startTime DateTime
+  endTime   DateTime
+  coach     User     @relation("CoachSlots", fields: [coachId], references: [id])
   coachId   Int
-  coach     User     @relation(fields: [coachId], references: [id])
+  isBooked  Boolean  @default(false)
   booking   Booking?
 }
 
 model Booking {
-  id        Int      @id @default(autoincrement())
-  slotId    Int      @unique
-  slot      Slot     @relation(fields: [slotId], references: [id])
-  studentId Int
-  student   User     @relation(fields: [studentId], references: [id])
+  id           Int     @id @default(autoincrement())
+  slot         Slot    @relation(fields: [slotId], references: [id])
+  slotId       Int     @unique
+  student      User    @relation("StudentBookings", fields: [studentId], references: [id])
+  studentId    Int
   satisfaction Int?
-  notes     String?
+  notes        String?
 }
