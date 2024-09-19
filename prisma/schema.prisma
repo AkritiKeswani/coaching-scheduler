@@ -15,6 +15,7 @@ model User {
   isCoach         Boolean   @default(false)
   coachSlots      Slot[]    @relation("CoachSlots")
   studentBookings Booking[] @relation("StudentBookings")
+  coachCalls      Call[]    @relation("CoachCalls")
 }
 
 model Slot {
@@ -28,11 +29,21 @@ model Slot {
 }
 
 model Booking {
-  id           Int     @id @default(autoincrement())
-  slot         Slot    @relation(fields: [slotId], references: [id])
-  slotId       Int     @unique
-  student      User    @relation("StudentBookings", fields: [studentId], references: [id])
-  studentId    Int
+  id        Int      @id @default(autoincrement())
+  slot      Slot     @relation(fields: [slotId], references: [id])
+  slotId    Int      @unique
+  student   User     @relation("StudentBookings", fields: [studentId], references: [id])
+  studentId Int
+  call      Call?
+}
+
+model Call {
+  id           Int      @id @default(autoincrement())
+  booking      Booking  @relation(fields: [bookingId], references: [id])
+  bookingId    Int      @unique
+  coach        User     @relation("CoachCalls", fields: [coachId], references: [id])
+  coachId      Int
   satisfaction Int?
   notes        String?
+  date         DateTime @default(now())
 }

@@ -22,9 +22,9 @@ const Home: NextPage = () => {
           Welcome to <span className="text-blue-600">Coaching Scheduler</span>
         </h1>
 
-        <p className="mt-3 text-2xl">
+        <p className="mt-3 text-2xl text-gray-500">
           Current user type:{" "}
-          <code className="p-3 font-mono text-lg bg-gray-100 rounded-md">
+          <code className="p-3 font-mono text-lg bg-gray-200 rounded-md text-gray-900">
             {userType}
           </code>
         </p>
