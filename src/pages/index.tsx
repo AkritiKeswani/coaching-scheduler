@@ -1,14 +1,34 @@
+// pages/index.tsx
+
 import { NextPage } from "next";
 import Head from "next/head";
 import Link from "next/link";
 import { useUser } from "../contexts/UserContext";
+import { useRouter } from "next/router";
 
 const Home: NextPage = () => {
-  const { userType, setUserType } = useUser();
+  const { setUser } = useUser();
+  const router = useRouter();
 
-  if (!userType || !setUserType) {
-    return <div>Loading...</div>; // Or some error state
-  }
+  const handleSelectCoach = () => {
+    setUser({
+      id: 1,
+      name: "Coach",
+      email: "coach@example.com",
+      isCoach: true,
+    });
+    router.push("/coach");
+  };
+
+  const handleSelectStudent = () => {
+    setUser({
+      id: 2,
+      name: "Student",
+      email: "student@example.com",
+      isCoach: false,
+    });
+    router.push("/student");
+  };
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen py-2">
@@ -18,60 +38,24 @@ const Home: NextPage = () => {
       </Head>
 
       <main className="flex flex-col items-center justify-center w-full flex-1 px-20 text-center">
-        <h1 className="text-6xl font-bold">
-          Welcome to <span className="text-blue-600">Coaching Scheduler</span>
-        </h1>
+        <h1 className="text-4xl font-bold mb-6">Coaching Scheduler</h1>
 
-        <p className="mt-3 text-2xl text-gray-500">
-          Current user type:{" "}
-          <code className="p-3 font-mono text-lg bg-gray-200 rounded-md text-gray-900">
-            {userType}
-          </code>
-        </p>
-
-        <button
-          onClick={() =>
-            setUserType(userType === "coach" ? "student" : "coach")
-          }
-          className="mt-6 px-4 py-2 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-        >
-          Switch to {userType === "coach" ? "Student" : "Coach"}
-        </button>
-
-        <div className="flex flex-wrap items-center justify-around max-w-4xl mt-6 sm:w-full">
-          <Link
-            href="/coach"
-            className="p-6 mt-6 text-left border w-96 rounded-xl hover:text-blue-600 focus:text-blue-600"
+        <div className="space-y-4">
+          <button
+            onClick={handleSelectCoach}
+            className="bg-blue-500 text-white px-6 py-2 rounded"
           >
-            <h3 className="text-2xl font-bold">Coach Dashboard &rarr;</h3>
-            <p className="mt-4 text-xl">
-              Manage coaching slots and view upcoming sessions.
-            </p>
-          </Link>
+            Coach View
+          </button>
 
-          <Link
-            href="/student"
-            className="p-6 mt-6 text-left border w-96 rounded-xl hover:text-blue-600 focus:text-blue-600"
+          <button
+            onClick={handleSelectStudent}
+            className="bg-green-500 text-white px-6 py-2 rounded"
           >
-            <h3 className="text-2xl font-bold">Student Booking &rarr;</h3>
-            <p className="mt-4 text-xl">
-              Book coaching sessions and manage appointments.
-            </p>
-          </Link>
+            Student View
+          </button>
         </div>
       </main>
-
-      <footer className="flex items-center justify-center w-full h-24 border-t">
-        <a
-          className="flex items-center justify-center"
-          href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          {/* Powered by{" "}
-          <img src="/vercel.svg" alt="Vercel Logo" className="h-4 ml-2" /> */}
-        </a>
-      </footer>
     </div>
   );
 };

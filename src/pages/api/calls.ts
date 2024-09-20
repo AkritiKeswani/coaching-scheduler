@@ -1,49 +1,75 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-import { PrismaClient } from "@prisma/client";
+// pages/api/calls.ts
 
-const prisma = new PrismaClient();
+import { NextApiRequest, NextApiResponse } from "next";
+import prisma from "../../lib/prisma"; // Adjust the path as needed
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  switch (req.method) {
+  const { method } = req;
+
+  switch (method) {
     case "GET":
-      return getCalls(req, res);
+      return handleGetCalls(req, res);
     case "POST":
-      return createCall(req, res);
+      return handleCreateCall(req, res);
     default:
       res.setHeader("Allow", ["GET", "POST"]);
-      res.status(405).end(`Method ${req.method} Not Allowed`);
+      res.status(405).end(`Method ${method} Not Allowed`);
   }
 }
 
-async function getCalls(req: NextApiRequest, res: NextApiResponse) {
+async function handleGetCalls(req: NextApiRequest, res: NextApiResponse) {
   const { coachId } = req.query;
+
   try {
     const calls = await prisma.call.findMany({
-      where: coachId ? { coachId: Number(coachId) } : undefined,
-      include: { booking: { include: { student: true, slot: true } } },
+      where: { coachId: Number(coachId) },
+      include: {
+        booking: {
+          include: {
+            student: true,
+            slot: true,
+          },
+        },
+      },
     });
+
     res.status(200).json(calls);
   } catch (error) {
-    res.status(500).json({ error: "Failed to fetch calls" });
+    console.error("Error fetching calls:", error);
+    res.status(500).json({ error: "Error fetching calls" });
   }
 }
 
-async function createCall(req: NextApiRequest, res: NextApiResponse) {
-  const { bookingId, satisfaction, notes } = req.body;
+async function handleCreateCall(req: NextApiRequest, res: NextApiResponse) {
+  const { bookingId, coachId, satisfaction, notes } = req.body;
+
   try {
-    const newCall = await prisma.call.create({
+    // Ensure the call hasn't already been recorded
+    const existingCall = await prisma.call.findUnique({
+      where: { bookingId: Number(bookingId) },
+    });
+
+    if (existingCall) {
+      return res
+        .status(400)
+        .json({ error: "Feedback for this call has already been recorded" });
+    }
+
+    const call = await prisma.call.create({
       data: {
-        bookingId: Number(bookingId),
+        booking: { connect: { id: Number(bookingId) } },
+        coach: { connect: { id: Number(coachId) } },
         satisfaction: Number(satisfaction),
         notes,
       },
-      include: { booking: { include: { student: true, slot: true } } },
     });
-    res.status(201).json(newCall);
+
+    res.status(201).json(call);
   } catch (error) {
-    res.status(500).json({ error: "Failed to create call" });
+    console.error("Error recording call feedback:", error);
+    res.status(500).json({ error: "Error recording call feedback" });
   }
 }

@@ -1,31 +1,33 @@
-//This helps manage and switch between coach and student views across the application.
-import React, { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, ReactNode } from "react";
 
-type UserType = "coach" | "student";
+interface User {
+  id: number;
+  name: string;
+  email: string;
+  isCoach: boolean;
+}
 
 interface UserContextType {
-  userType: UserType;
-  setUserType: (type: UserType) => void;
+  user: User | null;
+  setUser: (user: User | null) => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
-export const UserProvider: React.FC<{ children: ReactNode }> = ({
-  children,
-}) => {
-  const [userType, setUserType] = useState<UserType>("student");
-
-  return (
-    <UserContext.Provider value={{ userType, setUserType }}>
-      {children}
-    </UserContext.Provider>
-  );
-};
-
 export const useUser = () => {
   const context = useContext(UserContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error("useUser must be used within a UserProvider");
   }
   return context;
+};
+
+export const UserProvider = ({ children }: { children: ReactNode }) => {
+  const [user, setUser] = useState<User | null>(null);
+
+  return (
+    <UserContext.Provider value={{ user, setUser }}>
+      {children}
+    </UserContext.Provider>
+  );
 };

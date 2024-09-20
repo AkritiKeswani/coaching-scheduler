@@ -35,3 +35,14 @@
 //        "skipLibCheck": true
 //      }
 //    }
+
+// {
+//   "compilerOptions": {
+//     // ... other options ...
+//     "baseUrl": ".",
+//     "paths": {
+//       "@/*": ["src/*"]
+//     }
+//   },
+//   // ... rest of your tsconfig ...
+// }
