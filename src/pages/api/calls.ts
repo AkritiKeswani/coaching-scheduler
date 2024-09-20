@@ -1,7 +1,7 @@
 // pages/api/calls.ts
 
 import { NextApiRequest, NextApiResponse } from "next";
-import prisma from "../../lib/prisma"; // Adjust the path as needed
+import prisma from "../../lib/prisma";
 
 export default async function handler(
   req: NextApiRequest,
@@ -21,11 +21,23 @@ export default async function handler(
 }
 
 async function handleGetCalls(req: NextApiRequest, res: NextApiResponse) {
-  const { coachId } = req.query;
+  let coachId = req.query.coachId;
+
+  if (Array.isArray(coachId)) coachId = coachId[0];
+
+  if (!coachId) {
+    return res.status(400).json({ error: "coachId is required" });
+  }
+
+  const coachIdNumber = parseInt(coachId, 10);
+
+  if (isNaN(coachIdNumber)) {
+    return res.status(400).json({ error: "Invalid coachId" });
+  }
 
   try {
     const calls = await prisma.call.findMany({
-      where: { coachId: Number(coachId) },
+      where: { coachId: coachIdNumber },
       include: {
         booking: {
           include: {
@@ -46,10 +58,36 @@ async function handleGetCalls(req: NextApiRequest, res: NextApiResponse) {
 async function handleCreateCall(req: NextApiRequest, res: NextApiResponse) {
   const { bookingId, coachId, satisfaction, notes } = req.body;
 
+  if (!bookingId || !coachId || satisfaction === undefined || !notes) {
+    return res.status(400).json({
+      error: "bookingId, coachId, satisfaction, and notes are required",
+    });
+  }
+
+  const bookingIdNumber = parseInt(bookingId, 10);
+  const coachIdNumber = parseInt(coachId, 10);
+  const satisfactionNumber = parseInt(satisfaction, 10);
+
+  if (
+    isNaN(bookingIdNumber) ||
+    isNaN(coachIdNumber) ||
+    isNaN(satisfactionNumber)
+  ) {
+    return res
+      .status(400)
+      .json({ error: "Invalid bookingId, coachId, or satisfaction" });
+  }
+
+  if (satisfactionNumber < 1 || satisfactionNumber > 5) {
+    return res
+      .status(400)
+      .json({ error: "Satisfaction must be between 1 and 5" });
+  }
+
   try {
     // Ensure the call hasn't already been recorded
     const existingCall = await prisma.call.findUnique({
-      where: { bookingId: Number(bookingId) },
+      where: { bookingId: bookingIdNumber },
     });
 
     if (existingCall) {
@@ -58,11 +96,30 @@ async function handleCreateCall(req: NextApiRequest, res: NextApiResponse) {
         .json({ error: "Feedback for this call has already been recorded" });
     }
 
+    // Retrieve the booking
+    const booking = await prisma.booking.findUnique({
+      where: { id: bookingIdNumber },
+      include: {
+        slot: true,
+      },
+    });
+
+    if (!booking) {
+      return res.status(404).json({ error: "Booking not found" });
+    }
+
+    if (booking.slot.coachId !== coachIdNumber) {
+      return res.status(403).json({
+        error: "You are not authorized to record feedback for this call",
+      });
+    }
+
+    // Create the call record
     const call = await prisma.call.create({
       data: {
-        booking: { connect: { id: Number(bookingId) } },
-        coach: { connect: { id: Number(coachId) } },
-        satisfaction: Number(satisfaction),
+        booking: { connect: { id: bookingIdNumber } },
+        coach: { connect: { id: coachIdNumber } },
+        satisfaction: satisfactionNumber,
         notes,
       },
     });

@@ -1,15 +1,15 @@
-// pages/coach/index.tsx
+// src/pages/coach/index.tsx
 
 import { NextPage } from "next";
 import { useState, useEffect } from "react";
 import { useUser } from "../../contexts/UserContext";
+import { useRouter } from "next/router";
 
 interface Booking {
   id: number;
   slot: {
     id: number;
     startTime: string;
-    endTime: string;
     endTime: string;
     coach: {
       id: number;
@@ -39,6 +39,21 @@ interface Slot {
 
 const CoachDashboard: NextPage = () => {
   const { user, setUser } = useUser();
+  const router = useRouter();
+
+  // Function to switch to student role
+  const switchToStudent = () => {
+    setUser({
+      id: 6, // ID of Test Student
+      name: "Test Student",
+      email: "student@example.com",
+      phone: "098-765-4321",
+      isCoach: false,
+    });
+    router.push("/student");
+  };
+
+  // State variables
   const [slots, setSlots] = useState<Slot[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [newSlotStart, setNewSlotStart] = useState("");
@@ -51,17 +66,6 @@ const CoachDashboard: NextPage = () => {
   const [feedback, setFeedback] = useState<{
     [bookingId: number]: { satisfaction: number; notes: string };
   }>({});
-
-  // Function to switch roles
-  const switchToStudent = () => {
-    setUser({
-      id: 2,
-      name: "Test Student",
-      email: "student@example.com",
-      phone: "098-765-4321",
-      isCoach: false,
-    });
-  };
 
   useEffect(() => {
     if (user?.isCoach) {

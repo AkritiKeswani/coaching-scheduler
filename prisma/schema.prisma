@@ -22,7 +22,7 @@ model Slot {
   id        Int      @id @default(autoincrement())
   startTime DateTime
   endTime   DateTime
-  coach     User     @relation("CoachSlots", fields: [coachId], references: [id])
+  coach     User     @relation("CoachSlots", fields: [coachId], references: [id], onDelete: Cascade)
   coachId   Int
   isBooked  Boolean  @default(false)
   booking   Booking?
@@ -30,18 +30,18 @@ model Slot {
 
 model Booking {
   id        Int      @id @default(autoincrement())
-  slot      Slot     @relation(fields: [slotId], references: [id])
+  slot      Slot     @relation(fields: [slotId], references: [id], onDelete: Cascade)
   slotId    Int      @unique
-  student   User     @relation("StudentBookings", fields: [studentId], references: [id])
+  student   User     @relation("StudentBookings", fields: [studentId], references: [id], onDelete: Cascade)
   studentId Int
   call      Call?
 }
 
 model Call {
   id           Int      @id @default(autoincrement())
-  booking      Booking  @relation(fields: [bookingId], references: [id])
+  booking      Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
   bookingId    Int      @unique
-  coach        User     @relation("CoachCalls", fields: [coachId], references: [id])
+  coach        User     @relation("CoachCalls", fields: [coachId], references: [id], onDelete: Cascade)
   coachId      Int
   satisfaction Int?
   notes        String?

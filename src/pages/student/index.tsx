@@ -1,8 +1,9 @@
-// pages/student/index.tsx
+// src/pages/student/index.tsx
 
 import { NextPage } from "next";
 import { useState, useEffect } from "react";
 import { useUser } from "../../contexts/UserContext";
+import { useRouter } from "next/router";
 
 interface Slot {
   id: number;
@@ -32,16 +33,18 @@ interface Booking {
 
 const StudentDashboard: NextPage = () => {
   const { user, setUser } = useUser();
+  const router = useRouter();
 
-  // Function to switch roles
+  // Function to switch to coach role
   const switchToCoach = () => {
     setUser({
-      id: 1,
+      id: 5, // ID of Test Coach
       name: "Test Coach",
       email: "coach@example.com",
       phone: "123-456-7890",
       isCoach: true,
     });
+    router.push("/coach");
   };
 
   const [availableSlots, setAvailableSlots] = useState<Slot[]>([]);
