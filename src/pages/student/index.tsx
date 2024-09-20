@@ -1,3 +1,5 @@
+// src/pages/student/index.tsx
+
 import { NextPage } from "next";
 import { useState, useEffect } from "react";
 import { useUser } from "../../contexts/UserContext";
@@ -112,11 +114,102 @@ const StudentDashboard: NextPage = () => {
     }
   };
 
+  if (!user?.isCoach && user) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex justify-center items-center p-4">
+        <div className="w-full max-w-4xl bg-white rounded-lg shadow-md p-8">
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-2xl font-semibold text-gray-800">
+              Student Dashboard
+            </h1>
+            <button
+              onClick={switchToCoach}
+              className="bg-black hover:bg-gray-800 text-white font-medium py-2 px-4 rounded transition duration-300"
+            >
+              Switch to Coach
+            </button>
+          </div>
+
+          {error && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+              {error}
+            </div>
+          )}
+
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-xl font-semibold mb-4 text-gray-700">
+                Available Slots
+              </h2>
+              {isFetchingSlots ? (
+                <div className="text-gray-600">Loading available slots...</div>
+              ) : (
+                <ul className="space-y-4">
+                  {availableSlots.map((slot) => (
+                    <li key={slot.id} className="border-b pb-4">
+                      <p className="font-medium text-gray-800">
+                        {new Date(slot.startTime).toLocaleString()} -{" "}
+                        {new Date(slot.endTime).toLocaleString()}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        Coach: {slot.coach.name}
+                      </p>
+                      <button
+                        onClick={() => bookSlot(slot.id)}
+                        className="mt-2 bg-black hover:bg-gray-800 text-white font-medium py-2 px-4 rounded transition duration-300"
+                      >
+                        Book Slot
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            <div>
+              <h2 className="text-xl font-semibold mb-4 text-gray-700">
+                Your Bookings
+              </h2>
+              {isFetchingBookings ? (
+                <div className="text-gray-600">Loading your bookings...</div>
+              ) : (
+                <ul className="space-y-4">
+                  {bookings.map((booking) => (
+                    <li key={booking.id} className="border-b pb-4">
+                      <p className="font-medium text-gray-800">
+                        {new Date(booking.slot.startTime).toLocaleString()} -{" "}
+                        {new Date(booking.slot.endTime).toLocaleString()}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        Coach: {booking.slot.coach.name} (Phone:{" "}
+                        {booking.slot.coach.phone})
+                      </p>
+                      {booking.call ? (
+                        <div className="mt-2 text-sm">
+                          <p>Satisfaction: {booking.call.satisfaction}</p>
+                          <p>Notes: {booking.call.notes}</p>
+                        </div>
+                      ) : (
+                        <p className="text-sm text-yellow-600">
+                          No feedback recorded yet.
+                        </p>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (!user) {
     return (
-      <div className="min-h-screen bg-gray-800 text-white flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-3xl font-bold mb-4">Loading...</h1>
+          <h1 className="text-2xl font-semibold mb-2">Loading...</h1>
         </div>
       </div>
     );
@@ -124,86 +217,16 @@ const StudentDashboard: NextPage = () => {
 
   if (user.isCoach) {
     return (
-      <div className="min-h-screen bg-gray-800 text-white flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-3xl font-bold mb-4">Access Denied</h1>
-          <p>This page is for students only.</p>
+          <h1 className="text-2xl font-semibold mb-2">Access Denied</h1>
+          <p className="text-gray-600">This page is for students only.</p>
         </div>
       </div>
     );
   }
 
-  return (
-    <div className="min-h-screen bg-gray-800 text-white p-4 md:p-8">
-      <h1 className="text-3xl md:text-4xl font-bold mb-6">Student Dashboard</h1>
-
-      <button
-        onClick={switchToCoach}
-        className="bg-sky-400 hover:bg-sky-500 text-gray-800 font-bold py-2 px-4 rounded-lg transition duration-300 mb-6"
-      >
-        Switch to Coach
-      </button>
-
-      {error && (
-        <div className="text-red-400 mb-4 p-2 bg-red-900 rounded">{error}</div>
-      )}
-
-      <div className="grid md:grid-cols-2 gap-6">
-        <div>
-          <h2 className="text-2xl font-semibold mb-4">Available Slots</h2>
-          {isFetchingSlots ? (
-            <div className="text-gray-400">Loading available slots...</div>
-          ) : (
-            <ul className="space-y-4">
-              {availableSlots.map((slot) => (
-                <li key={slot.id} className="bg-gray-700 p-4 rounded-lg">
-                  <p className="font-semibold">
-                    {new Date(slot.startTime).toLocaleString()} -{" "}
-                    {new Date(slot.endTime).toLocaleString()}
-                  </p>
-                  <p className="mb-2">Coach: {slot.coach.name}</p>
-                  <button
-                    onClick={() => bookSlot(slot.id)}
-                    className="bg-teal-500 hover:bg-teal-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300"
-                  >
-                    Book
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        <div>
-          <h2 className="text-2xl font-semibold mb-4">Your Bookings</h2>
-          {isFetchingBookings ? (
-            <div className="text-gray-400">Loading your bookings...</div>
-          ) : (
-            <ul className="space-y-4">
-              {bookings.map((booking) => (
-                <li key={booking.id} className="bg-gray-700 p-4 rounded-lg">
-                  <p className="font-semibold">
-                    {new Date(booking.slot.startTime).toLocaleString()} -{" "}
-                    {new Date(booking.slot.endTime).toLocaleString()}
-                  </p>
-                  <p>Coach: {booking.slot.coach.name}</p>
-                  <p className="mb-2">Phone: {booking.slot.coach.phone}</p>
-                  {booking.call ? (
-                    <div className="mt-2 bg-gray-600 p-2 rounded">
-                      <p>Satisfaction: {booking.call.satisfaction}</p>
-                      <p>Notes: {booking.call.notes}</p>
-                    </div>
-                  ) : (
-                    <p className="text-yellow-400">No feedback recorded yet.</p>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      </div>
-    </div>
-  );
+  return null;
 };
 
 export default StudentDashboard;

@@ -40,13 +40,13 @@ const HomePage: NextPage = () => {
         <div className="space-y-4">
           <button
             onClick={switchToCoach}
-            className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded transition duration-300"
+            className="w-full bg-black hover:bg-gray-800 text-white font-medium py-3 px-4 rounded transition duration-300"
           >
             Continue as Coach
           </button>
           <button
             onClick={switchToStudent}
-            className="w-full bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded transition duration-300"
+            className="w-full bg-black hover:bg-gray-800 text-white font-medium py-3 px-4 rounded transition duration-300"
           >
             Continue as Student
           </button>

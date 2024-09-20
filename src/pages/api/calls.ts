@@ -41,14 +41,37 @@ async function handleGetCalls(req: NextApiRequest, res: NextApiResponse) {
       include: {
         booking: {
           include: {
-            student: true,
+            student: {
+              select: {
+                id: true,
+                name: true,
+                phoneNumber: true,
+              },
+            },
             slot: true,
           },
         },
       },
+      orderBy: {
+        createdAt: "desc",
+      },
     });
 
-    res.status(200).json(calls);
+    // Format the response to include all necessary information
+    const formattedCalls = calls.map((call) => ({
+      id: call.id,
+      satisfaction: call.satisfaction,
+      notes: call.notes,
+      createdAt: call.createdAt,
+      studentName: call.booking.student.name,
+      studentPhoneNumber: call.booking.student.phoneNumber,
+      slotDetails: {
+        startTime: call.booking.slot.startTime,
+        endTime: call.booking.slot.endTime,
+      },
+    }));
+
+    res.status(200).json(formattedCalls);
   } catch (error) {
     console.error("Error fetching calls:", error);
     res.status(500).json({ error: "Error fetching calls" });

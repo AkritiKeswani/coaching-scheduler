@@ -1,5 +1,3 @@
-// pages/api/bookings.ts
-
 import { NextApiRequest, NextApiResponse } from "next";
 import prisma from "../../lib/prisma";
 
@@ -54,10 +52,22 @@ async function handleGetBookings(req: NextApiRequest, res: NextApiResponse) {
       include: {
         slot: {
           include: {
-            coach: true,
+            coach: {
+              select: {
+                id: true,
+                name: true,
+                phone: true, // Corrected field name
+              },
+            },
           },
         },
-        student: true,
+        student: {
+          select: {
+            id: true,
+            name: true,
+            phone: true, // Corrected field name
+          },
+        },
         call: true,
       },
     });
@@ -87,6 +97,7 @@ async function handleCreateBooking(req: NextApiRequest, res: NextApiResponse) {
     // Check if the slot exists and is available
     const slot = await prisma.slot.findUnique({
       where: { id: slotIdNumber },
+      include: { coach: true },
     });
 
     if (!slot) {
@@ -107,10 +118,22 @@ async function handleCreateBooking(req: NextApiRequest, res: NextApiResponse) {
         include: {
           slot: {
             include: {
-              coach: true,
+              coach: {
+                select: {
+                  id: true,
+                  name: true,
+                  phone: true, // Corrected field name
+                },
+              },
             },
           },
-          student: true,
+          student: {
+            select: {
+              id: true,
+              name: true,
+              phone: true, // Corrected field name
+            },
+          },
         },
       }),
       prisma.slot.update({
@@ -119,7 +142,19 @@ async function handleCreateBooking(req: NextApiRequest, res: NextApiResponse) {
       }),
     ]);
 
-    res.status(201).json(booking);
+    // Return booking details including phone numbers
+    res.status(201).json({
+      id: booking.id,
+      coachName: booking.slot.coach.name,
+      coachPhone: booking.slot.coach.phone, // Corrected field name
+      studentName: booking.student.name,
+      studentPhone: booking.student.phone, // Corrected field name
+      slotDetails: {
+        id: booking.slot.id,
+        startTime: booking.slot.startTime,
+        endTime: booking.slot.endTime,
+      },
+    });
   } catch (error) {
     console.error("Error creating booking:", error);
     res.status(500).json({ error: "Error creating booking" });

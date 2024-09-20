@@ -12,13 +12,13 @@ interface Booking {
     coach: {
       id: number;
       name: string;
-      phone: string;
+      phone: string; // This is now `phone`
     };
   };
   student: {
     id: number;
     name: string;
-    phone: string;
+    phone: string; // This is now `phone`
   };
   call?: {
     id: number;
@@ -167,145 +167,165 @@ const CoachDashboard: NextPage = () => {
 
   if (!user?.isCoach) {
     return (
-      <div className="min-h-screen bg-gray-800 text-white flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-3xl font-bold mb-4">Access Denied</h1>
-          <p>This page is for coaches only.</p>
+          <h1 className="text-2xl font-semibold mb-2">Access Denied</h1>
+          <p className="text-gray-600">This page is for coaches only.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-800 text-white p-4 md:p-8">
-      <h1 className="text-3xl md:text-4xl font-bold mb-6">Coach Dashboard</h1>
-
-      <button
-        onClick={switchToStudent}
-        className="bg-teal-500 hover:bg-teal-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300 mb-6"
-      >
-        Switch to Student
-      </button>
-
-      {error && (
-        <div className="text-red-400 mb-4 p-2 bg-red-900 rounded">{error}</div>
-      )}
-
-      <div className="mb-6">
-        <input
-          type="datetime-local"
-          value={newSlotStart}
-          onChange={(e) => setNewSlotStart(e.target.value)}
-          className="mr-2 p-2 border rounded bg-gray-700 text-white"
-          disabled={isAddingSlot}
-        />
-        <button
-          onClick={addSlot}
-          className="bg-sky-400 hover:bg-sky-500 text-gray-800 font-bold py-2 px-4 rounded-lg transition duration-300"
-          disabled={isAddingSlot}
-        >
-          {isAddingSlot ? "Adding..." : "Add Slot"}
-        </button>
-      </div>
-
-      <div className="grid md:grid-cols-2 gap-6">
-        <div>
-          <h2 className="text-2xl font-semibold mb-4">Your Slots</h2>
-          {isFetchingSlots ? (
-            <div className="text-gray-400">Loading slots...</div>
-          ) : (
-            <ul className="space-y-4">
-              {slots.map((slot) => (
-                <li key={slot.id} className="bg-gray-700 p-4 rounded-lg">
-                  <p className="font-semibold">
-                    {new Date(slot.startTime).toLocaleString()} -{" "}
-                    {new Date(slot.endTime).toLocaleString()}
-                  </p>
-                  {slot.isBooked && slot.booking ? (
-                    <div className="mt-2">
-                      <p>
-                        Booked by: {slot.booking.student.name} (Phone:{" "}
-                        {slot.booking.student.phone})
-                      </p>
-                      <div className="mt-2 space-y-2">
-                        <input
-                          type="number"
-                          min="1"
-                          max="5"
-                          placeholder="Satisfaction (1-5)"
-                          className="w-full p-2 border rounded bg-gray-600 text-white"
-                          value={feedback[slot.booking.id]?.satisfaction || ""}
-                          onChange={(e) => {
-                            const satisfaction = parseInt(e.target.value);
-                            setFeedback({
-                              ...feedback,
-                              [slot.booking!.id]: {
-                                ...feedback[slot.booking!.id],
-                                satisfaction,
-                              },
-                            });
-                          }}
-                        />
-                        <textarea
-                          placeholder="Notes"
-                          className="w-full p-2 border rounded bg-gray-600 text-white"
-                          value={feedback[slot.booking.id]?.notes || ""}
-                          onChange={(e) => {
-                            const notes = e.target.value;
-                            setFeedback({
-                              ...feedback,
-                              [slot.booking!.id]: {
-                                ...feedback[slot.booking!.id],
-                                notes,
-                              },
-                            });
-                          }}
-                        />
-                        <button
-                          onClick={() => recordSatisfaction(slot.booking!.id)}
-                          className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300"
-                        >
-                          Record Feedback
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <span className="ml-2 text-green-400">Available</span>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
+    <div className="min-h-screen bg-gray-50 flex justify-center items-center p-4">
+      <div className="w-full max-w-4xl bg-white rounded-lg shadow-md p-8">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-semibold text-gray-800">
+            Coach Dashboard
+          </h1>
+          <button
+            onClick={switchToStudent}
+            className="bg-black hover:bg-gray-800 text-white font-medium py-2 px-4 rounded transition duration-300"
+          >
+            Switch to Student
+          </button>
         </div>
 
-        <div>
-          <h2 className="text-2xl font-semibold mb-4">Your Bookings</h2>
-          {isFetchingBookings ? (
-            <div className="text-gray-400">Loading bookings...</div>
-          ) : (
-            <ul className="space-y-4">
-              {bookings.map((booking) => (
-                <li key={booking.id} className="bg-gray-700 p-4 rounded-lg">
-                  <p className="font-semibold">
-                    {new Date(booking.slot.startTime).toLocaleString()} -{" "}
-                    {new Date(booking.slot.endTime).toLocaleString()}
-                  </p>
-                  <p>
-                    Student: {booking.student.name} (Phone:{" "}
-                    {booking.student.phone})
-                  </p>
-                  {booking.call ? (
-                    <div className="mt-2">
-                      <p>Satisfaction: {booking.call.satisfaction}</p>
-                      <p>Notes: {booking.call.notes}</p>
-                    </div>
-                  ) : (
-                    <p className="text-yellow-400">No feedback recorded yet.</p>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            {error}
+          </div>
+        )}
+
+        <div className="mb-6">
+          <h2 className="text-xl font-semibold mb-4 text-gray-700">
+            Add New Slot
+          </h2>
+          <div className="flex space-x-2">
+            <input
+              type="datetime-local"
+              value={newSlotStart}
+              onChange={(e) => setNewSlotStart(e.target.value)}
+              className="flex-grow border rounded px-3 py-2"
+              disabled={isAddingSlot}
+            />
+            <button
+              onClick={addSlot}
+              className="bg-black hover:bg-gray-800 text-white font-medium py-2 px-4 rounded transition duration-300"
+              disabled={isAddingSlot}
+            >
+              {isAddingSlot ? "Adding..." : "Add Slot"}
+            </button>
+          </div>
+        </div>
+
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-xl font-semibold mb-4 text-gray-700">
+              Your Slots
+            </h2>
+            {isFetchingSlots ? (
+              <div className="text-gray-600">Loading slots...</div>
+            ) : (
+              <ul className="space-y-4">
+                {slots.map((slot) => (
+                  <li key={slot.id} className="border-b pb-4">
+                    <p className="font-medium text-gray-800">
+                      {new Date(slot.startTime).toLocaleString()} -{" "}
+                      {new Date(slot.endTime).toLocaleString()}
+                    </p>
+                    {slot.isBooked && slot.booking ? (
+                      <div className="mt-2">
+                        <p className="text-sm text-gray-600">
+                          Booked by: {slot.booking.student.name} (Phone:{" "}
+                          {slot.booking.student.phone})
+                        </p>
+                        <div className="mt-2 space-y-2">
+                          <input
+                            type="number"
+                            min="1"
+                            max="5"
+                            placeholder="Satisfaction (1-5)"
+                            className="w-full border rounded px-3 py-2"
+                            value={
+                              feedback[slot.booking.id]?.satisfaction || ""
+                            }
+                            onChange={(e) => {
+                              const satisfaction = parseInt(e.target.value);
+                              setFeedback({
+                                ...feedback,
+                                [slot.booking!.id]: {
+                                  ...feedback[slot.booking!.id],
+                                  satisfaction,
+                                },
+                              });
+                            }}
+                          />
+                          <textarea
+                            placeholder="Notes"
+                            className="w-full border rounded px-3 py-2"
+                            value={feedback[slot.booking.id]?.notes || ""}
+                            onChange={(e) => {
+                              const notes = e.target.value;
+                              setFeedback({
+                                ...feedback,
+                                [slot.booking!.id]: {
+                                  ...feedback[slot.booking!.id],
+                                  notes,
+                                },
+                              });
+                            }}
+                          />
+                          <button
+                            onClick={() => recordSatisfaction(slot.booking!.id)}
+                            className="w-full bg-black hover:bg-gray-800 text-white font-medium py-2 px-4 rounded transition duration-300"
+                          >
+                            Record Feedback
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="text-sm text-green-600">Available</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          <div>
+            <h2 className="text-xl font-semibold mb-4 text-gray-700">
+              Your Bookings
+            </h2>
+            {isFetchingBookings ? (
+              <div className="text-gray-600">Loading bookings...</div>
+            ) : (
+              <ul className="space-y-4">
+                {bookings.map((booking) => (
+                  <li key={booking.id} className="border-b pb-4">
+                    <p className="font-medium text-gray-800">
+                      {new Date(booking.slot.startTime).toLocaleString()} -{" "}
+                      {new Date(booking.slot.endTime).toLocaleString()}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      Student: {booking.student.name} (Phone:{" "}
+                      {booking.student.phone})
+                    </p>
+                    {booking.call ? (
+                      <div className="mt-2 text-sm">
+                        <p>Satisfaction: {booking.call.satisfaction}</p>
+                        <p>Notes: {booking.call.notes}</p>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-yellow-600">
+                        No feedback recorded yet.
+                      </p>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </div>
       </div>
     </div>
