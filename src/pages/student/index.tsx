@@ -1,5 +1,3 @@
-// src/pages/student/index.tsx
-
 import { NextPage } from "next";
 import { useState, useEffect } from "react";
 import { useUser } from "../../contexts/UserContext";
@@ -35,10 +33,9 @@ const StudentDashboard: NextPage = () => {
   const { user, setUser } = useUser();
   const router = useRouter();
 
-  // Function to switch to coach role
   const switchToCoach = () => {
     setUser({
-      id: 5, // ID of Test Coach
+      id: 5,
       name: "Test Coach",
       email: "coach@example.com",
       phone: "123-456-7890",
@@ -115,69 +112,96 @@ const StudentDashboard: NextPage = () => {
     }
   };
 
-  if (!user || user.isCoach) {
-    return <div>Access denied. This page is for students only.</div>;
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-800 text-white flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold mb-4">Loading...</h1>
+        </div>
+      </div>
+    );
+  }
+
+  if (user.isCoach) {
+    return (
+      <div className="min-h-screen bg-gray-800 text-white flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold mb-4">Access Denied</h1>
+          <p>This page is for students only.</p>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Student Dashboard</h1>
+    <div className="min-h-screen bg-gray-800 text-white p-4 md:p-8">
+      <h1 className="text-3xl md:text-4xl font-bold mb-6">Student Dashboard</h1>
 
       <button
         onClick={switchToCoach}
-        className="bg-gray-500 text-white px-4 py-2 rounded mb-4"
+        className="bg-sky-400 hover:bg-sky-500 text-gray-800 font-bold py-2 px-4 rounded-lg transition duration-300 mb-6"
       >
         Switch to Coach
       </button>
 
-      {error && <div className="text-red-500 mb-4">{error}</div>}
-
-      <h2 className="text-xl font-semibold mb-2">Available Slots</h2>
-      {isFetchingSlots ? (
-        <div>Loading available slots...</div>
-      ) : (
-        <ul>
-          {availableSlots.map((slot) => (
-            <li key={slot.id} className="mb-2 p-2 border rounded">
-              <p>
-                {new Date(slot.startTime).toLocaleString()} -{" "}
-                {new Date(slot.endTime).toLocaleString()} with {slot.coach.name}
-              </p>
-              <button
-                onClick={() => bookSlot(slot.id)}
-                className="ml-2 bg-blue-500 text-white px-2 py-1 rounded"
-              >
-                Book
-              </button>
-            </li>
-          ))}
-        </ul>
+      {error && (
+        <div className="text-red-400 mb-4 p-2 bg-red-900 rounded">{error}</div>
       )}
 
-      <h2 className="text-xl font-semibold mt-4 mb-2">Your Bookings</h2>
-      {isFetchingBookings ? (
-        <div>Loading your bookings...</div>
-      ) : (
-        <ul>
-          {bookings.map((booking) => (
-            <li key={booking.id} className="mb-2 p-2 border rounded">
-              <p>
-                {new Date(booking.slot.startTime).toLocaleString()} -{" "}
-                {new Date(booking.slot.endTime).toLocaleString()} with{" "}
-                {booking.slot.coach.name} (Phone: {booking.slot.coach.phone})
-              </p>
-              {booking.call ? (
-                <div>
-                  <p>Satisfaction: {booking.call.satisfaction}</p>
-                  <p>Notes: {booking.call.notes}</p>
-                </div>
-              ) : (
-                <p>No feedback recorded yet.</p>
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
+      <div className="grid md:grid-cols-2 gap-6">
+        <div>
+          <h2 className="text-2xl font-semibold mb-4">Available Slots</h2>
+          {isFetchingSlots ? (
+            <div className="text-gray-400">Loading available slots...</div>
+          ) : (
+            <ul className="space-y-4">
+              {availableSlots.map((slot) => (
+                <li key={slot.id} className="bg-gray-700 p-4 rounded-lg">
+                  <p className="font-semibold">
+                    {new Date(slot.startTime).toLocaleString()} -{" "}
+                    {new Date(slot.endTime).toLocaleString()}
+                  </p>
+                  <p className="mb-2">Coach: {slot.coach.name}</p>
+                  <button
+                    onClick={() => bookSlot(slot.id)}
+                    className="bg-teal-500 hover:bg-teal-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300"
+                  >
+                    Book
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <div>
+          <h2 className="text-2xl font-semibold mb-4">Your Bookings</h2>
+          {isFetchingBookings ? (
+            <div className="text-gray-400">Loading your bookings...</div>
+          ) : (
+            <ul className="space-y-4">
+              {bookings.map((booking) => (
+                <li key={booking.id} className="bg-gray-700 p-4 rounded-lg">
+                  <p className="font-semibold">
+                    {new Date(booking.slot.startTime).toLocaleString()} -{" "}
+                    {new Date(booking.slot.endTime).toLocaleString()}
+                  </p>
+                  <p>Coach: {booking.slot.coach.name}</p>
+                  <p className="mb-2">Phone: {booking.slot.coach.phone}</p>
+                  {booking.call ? (
+                    <div className="mt-2 bg-gray-600 p-2 rounded">
+                      <p>Satisfaction: {booking.call.satisfaction}</p>
+                      <p>Notes: {booking.call.notes}</p>
+                    </div>
+                  ) : (
+                    <p className="text-yellow-400">No feedback recorded yet.</p>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

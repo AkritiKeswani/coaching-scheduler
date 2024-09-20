@@ -1,5 +1,3 @@
-// src/pages/coach/index.tsx
-
 import { NextPage } from "next";
 import { useState, useEffect } from "react";
 import { useUser } from "../../contexts/UserContext";
@@ -41,10 +39,9 @@ const CoachDashboard: NextPage = () => {
   const { user, setUser } = useUser();
   const router = useRouter();
 
-  // Function to switch to student role
   const switchToStudent = () => {
     setUser({
-      id: 6, // ID of Test Student
+      id: 6,
       name: "Test Student",
       email: "student@example.com",
       phone: "098-765-4321",
@@ -53,7 +50,6 @@ const CoachDashboard: NextPage = () => {
     router.push("/student");
   };
 
-  // State variables
   const [slots, setSlots] = useState<Slot[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [newSlotStart, setNewSlotStart] = useState("");
@@ -62,7 +58,6 @@ const CoachDashboard: NextPage = () => {
   const [isFetchingBookings, setIsFetchingBookings] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // State to manage satisfaction and notes for each booking
   const [feedback, setFeedback] = useState<{
     [bookingId: number]: { satisfaction: number; notes: string };
   }>({});
@@ -158,7 +153,6 @@ const CoachDashboard: NextPage = () => {
         throw new Error(errorData.error || "Failed to record satisfaction");
       }
       await fetchBookings();
-      // Clear feedback for the booking after recording
       setFeedback((prev) => {
         const updated = { ...prev };
         delete updated[bookingId];
@@ -172,132 +166,148 @@ const CoachDashboard: NextPage = () => {
   };
 
   if (!user?.isCoach) {
-    return <div>Access denied. This page is for coaches only.</div>;
+    return (
+      <div className="min-h-screen bg-gray-800 text-white flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold mb-4">Access Denied</h1>
+          <p>This page is for coaches only.</p>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Coach Dashboard</h1>
+    <div className="min-h-screen bg-gray-800 text-white p-4 md:p-8">
+      <h1 className="text-3xl md:text-4xl font-bold mb-6">Coach Dashboard</h1>
 
       <button
         onClick={switchToStudent}
-        className="bg-gray-500 text-white px-4 py-2 rounded mb-4"
+        className="bg-teal-500 hover:bg-teal-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300 mb-6"
       >
         Switch to Student
       </button>
 
-      {error && <div className="text-red-500 mb-4">{error}</div>}
+      {error && (
+        <div className="text-red-400 mb-4 p-2 bg-red-900 rounded">{error}</div>
+      )}
 
-      <div className="mb-4">
+      <div className="mb-6">
         <input
           type="datetime-local"
           value={newSlotStart}
           onChange={(e) => setNewSlotStart(e.target.value)}
-          className="mr-2 p-2 border rounded"
+          className="mr-2 p-2 border rounded bg-gray-700 text-white"
           disabled={isAddingSlot}
         />
         <button
           onClick={addSlot}
-          className="bg-blue-500 text-white px-4 py-2 rounded"
+          className="bg-sky-400 hover:bg-sky-500 text-gray-800 font-bold py-2 px-4 rounded-lg transition duration-300"
           disabled={isAddingSlot}
         >
           {isAddingSlot ? "Adding..." : "Add Slot"}
         </button>
       </div>
 
-      <h2 className="text-xl font-semibold mb-2">Your Slots</h2>
-
-      {isFetchingSlots ? (
-        <div>Loading slots...</div>
-      ) : (
-        <ul>
-          {slots.map((slot) => (
-            <li key={slot.id} className="mb-2 p-2 border rounded">
-              <p>
-                {new Date(slot.startTime).toLocaleString()} -{" "}
-                {new Date(slot.endTime).toLocaleString()}
-              </p>
-              {slot.isBooked && slot.booking ? (
-                <div>
-                  <p>
-                    Booked by: {slot.booking.student.name} (Phone:{" "}
-                    {slot.booking.student.phone})
+      <div className="grid md:grid-cols-2 gap-6">
+        <div>
+          <h2 className="text-2xl font-semibold mb-4">Your Slots</h2>
+          {isFetchingSlots ? (
+            <div className="text-gray-400">Loading slots...</div>
+          ) : (
+            <ul className="space-y-4">
+              {slots.map((slot) => (
+                <li key={slot.id} className="bg-gray-700 p-4 rounded-lg">
+                  <p className="font-semibold">
+                    {new Date(slot.startTime).toLocaleString()} -{" "}
+                    {new Date(slot.endTime).toLocaleString()}
                   </p>
-                  <input
-                    type="number"
-                    min="1"
-                    max="5"
-                    placeholder="Satisfaction (1-5)"
-                    className="mr-2 p-1 border rounded"
-                    value={feedback[slot.booking.id]?.satisfaction || ""}
-                    onChange={(e) => {
-                      const satisfaction = parseInt(e.target.value);
-                      setFeedback({
-                        ...feedback,
-                        [slot.booking!.id]: {
-                          ...feedback[slot.booking!.id],
-                          satisfaction,
-                        },
-                      });
-                    }}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Notes"
-                    className="mr-2 p-1 border rounded"
-                    value={feedback[slot.booking.id]?.notes || ""}
-                    onChange={(e) => {
-                      const notes = e.target.value;
-                      setFeedback({
-                        ...feedback,
-                        [slot.booking!.id]: {
-                          ...feedback[slot.booking!.id],
-                          notes,
-                        },
-                      });
-                    }}
-                  />
-                  <button
-                    onClick={() => recordSatisfaction(slot.booking!.id)}
-                    className="bg-green-500 text-white px-2 py-1 rounded"
-                  >
-                    Record
-                  </button>
-                </div>
-              ) : (
-                <span className="ml-2 text-green-500">Available</span>
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
+                  {slot.isBooked && slot.booking ? (
+                    <div className="mt-2">
+                      <p>
+                        Booked by: {slot.booking.student.name} (Phone:{" "}
+                        {slot.booking.student.phone})
+                      </p>
+                      <div className="mt-2 space-y-2">
+                        <input
+                          type="number"
+                          min="1"
+                          max="5"
+                          placeholder="Satisfaction (1-5)"
+                          className="w-full p-2 border rounded bg-gray-600 text-white"
+                          value={feedback[slot.booking.id]?.satisfaction || ""}
+                          onChange={(e) => {
+                            const satisfaction = parseInt(e.target.value);
+                            setFeedback({
+                              ...feedback,
+                              [slot.booking!.id]: {
+                                ...feedback[slot.booking!.id],
+                                satisfaction,
+                              },
+                            });
+                          }}
+                        />
+                        <textarea
+                          placeholder="Notes"
+                          className="w-full p-2 border rounded bg-gray-600 text-white"
+                          value={feedback[slot.booking.id]?.notes || ""}
+                          onChange={(e) => {
+                            const notes = e.target.value;
+                            setFeedback({
+                              ...feedback,
+                              [slot.booking!.id]: {
+                                ...feedback[slot.booking!.id],
+                                notes,
+                              },
+                            });
+                          }}
+                        />
+                        <button
+                          onClick={() => recordSatisfaction(slot.booking!.id)}
+                          className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300"
+                        >
+                          Record Feedback
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <span className="ml-2 text-green-400">Available</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
 
-      <h2 className="text-xl font-semibold mt-4 mb-2">Your Bookings</h2>
-      {isFetchingBookings ? (
-        <div>Loading bookings...</div>
-      ) : (
-        <ul>
-          {bookings.map((booking) => (
-            <li key={booking.id} className="mb-2 p-2 border rounded">
-              <p>
-                {new Date(booking.slot.startTime).toLocaleString()} -{" "}
-                {new Date(booking.slot.endTime).toLocaleString()}
-              </p>
-              <p>
-                Student: {booking.student.name} (Phone: {booking.student.phone})
-              </p>
-              {booking.call ? (
-                <div>
-                  <p>Satisfaction: {booking.call.satisfaction}</p>
-                  <p>Notes: {booking.call.notes}</p>
-                </div>
-              ) : (
-                <p>No feedback recorded yet.</p>
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
+        <div>
+          <h2 className="text-2xl font-semibold mb-4">Your Bookings</h2>
+          {isFetchingBookings ? (
+            <div className="text-gray-400">Loading bookings...</div>
+          ) : (
+            <ul className="space-y-4">
+              {bookings.map((booking) => (
+                <li key={booking.id} className="bg-gray-700 p-4 rounded-lg">
+                  <p className="font-semibold">
+                    {new Date(booking.slot.startTime).toLocaleString()} -{" "}
+                    {new Date(booking.slot.endTime).toLocaleString()}
+                  </p>
+                  <p>
+                    Student: {booking.student.name} (Phone:{" "}
+                    {booking.student.phone})
+                  </p>
+                  {booking.call ? (
+                    <div className="mt-2">
+                      <p>Satisfaction: {booking.call.satisfaction}</p>
+                      <p>Notes: {booking.call.notes}</p>
+                    </div>
+                  ) : (
+                    <p className="text-yellow-400">No feedback recorded yet.</p>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
     </div>
   );
 };
