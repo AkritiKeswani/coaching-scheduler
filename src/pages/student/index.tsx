@@ -1,5 +1,3 @@
-// src/pages/student/index.tsx
-
 import { NextPage } from "next";
 import { useState, useEffect } from "react";
 import { useUser } from "../../contexts/UserContext";
@@ -51,6 +49,8 @@ const StudentDashboard: NextPage = () => {
   const [isFetchingSlots, setIsFetchingSlots] = useState(false);
   const [isFetchingBookings, setIsFetchingBookings] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [newPhoneNumber, setNewPhoneNumber] = useState("");
+  const [isUpdatingPhone, setIsUpdatingPhone] = useState(false);
 
   useEffect(() => {
     if (user && !user.isCoach) {
@@ -114,6 +114,42 @@ const StudentDashboard: NextPage = () => {
     }
   };
 
+  const updatePhoneNumber = async () => {
+    if (!user || !newPhoneNumber) return;
+
+    setIsUpdatingPhone(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`/api/users/${user.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: newPhoneNumber }),
+      });
+
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.indexOf("application/json") !== -1) {
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || "Failed to update phone number");
+        }
+        setUser({ ...user, phone: data.phone });
+        setNewPhoneNumber("");
+      } else {
+        const text = await response.text();
+        console.error("Unexpected response:", text);
+        throw new Error("Received non-JSON response from server");
+      }
+    } catch (err) {
+      console.error("Error updating phone number:", err);
+      setError(
+        err.message || "Failed to update phone number. Please try again."
+      );
+    } finally {
+      setIsUpdatingPhone(false);
+    }
+  };
+
   if (!user?.isCoach && user) {
     return (
       <div className="min-h-screen bg-gray-50 flex justify-center items-center p-4">
@@ -135,6 +171,35 @@ const StudentDashboard: NextPage = () => {
               {error}
             </div>
           )}
+
+          <div className="mb-6">
+            <h2 className="text-xl font-semibold mb-2 text-gray-700">
+              Your Information
+            </h2>
+            <p className="text-sm text-gray-600 mb-2">
+              Current Phone: {user.phone}
+            </p>
+            <div className="flex space-x-2">
+              <input
+                type="tel"
+                value={newPhoneNumber}
+                onChange={(e) => setNewPhoneNumber(e.target.value)}
+                placeholder="New phone number"
+                className="flex-grow border rounded px-3 py-2"
+              />
+              <button
+                onClick={updatePhoneNumber}
+                disabled={isUpdatingPhone}
+                className="bg-black hover:bg-gray-800 text-white font-medium py-2 px-4 rounded transition duration-300"
+              >
+                {isUpdatingPhone ? "Updating..." : "Update Phone"}
+              </button>
+            </div>
+            <p className="text-xs text-gray-500 mt-2">
+              Note: Your phone number will be shared with coaches for
+              communication purposes when you book a slot.
+            </p>
+          </div>
 
           <div className="space-y-6">
             <div>
@@ -184,9 +249,13 @@ const StudentDashboard: NextPage = () => {
                         Coach: {booking.slot.coach.name} (Phone:{" "}
                         {booking.slot.coach.phone})
                       </p>
+                      <p className="text-sm text-gray-600">
+                        Your phone: {booking.student.phone}
+                      </p>
                       {booking.call ? (
                         <div className="mt-2 text-sm">
-                          <p>Satisfaction: {booking.call.satisfaction}</p>
+                          <p>Coach's Feedback:</p>
+                          <p>Satisfaction: {booking.call.satisfaction}/5</p>
                           <p>Notes: {booking.call.notes}</p>
                         </div>
                       ) : (

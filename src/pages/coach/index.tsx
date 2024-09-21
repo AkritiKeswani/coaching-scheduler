@@ -12,13 +12,13 @@ interface Booking {
     coach: {
       id: number;
       name: string;
-      phone: string; // This is now `phone`
+      phone: string;
     };
   };
   student: {
     id: number;
     name: string;
-    phone: string; // This is now `phone`
+    phone: string;
   };
   call?: {
     id: number;
@@ -240,6 +240,10 @@ const CoachDashboard: NextPage = () => {
                           Booked by: {slot.booking.student.name} (Phone:{" "}
                           {slot.booking.student.phone})
                         </p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Note: Student phone numbers are shared for
+                          communication purposes only.
+                        </p>
                         <div className="mt-2 space-y-2">
                           <input
                             type="number"
@@ -310,6 +314,10 @@ const CoachDashboard: NextPage = () => {
                     <p className="text-sm text-gray-600">
                       Student: {booking.student.name} (Phone:{" "}
                       {booking.student.phone})
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Note: Student phone numbers are shared for communication
+                      purposes only.
                     </p>
                     {booking.call ? (
                       <div className="mt-2 text-sm">

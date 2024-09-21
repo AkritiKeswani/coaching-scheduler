@@ -42,10 +42,22 @@ async function handleGetSlots(req: NextApiRequest, res: NextApiResponse) {
         ...(isBookedBoolean !== undefined && { isBooked: isBookedBoolean }),
       },
       include: {
-        coach: true,
+        coach: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+          },
+        },
         booking: {
           include: {
-            student: true,
+            student: {
+              select: {
+                id: true,
+                name: true,
+                phone: true,
+              },
+            },
           },
         },
       },
@@ -98,6 +110,15 @@ async function handleCreateSlot(req: NextApiRequest, res: NextApiResponse) {
         startTime: start,
         endTime: end,
         coach: { connect: { id: coachIdNumber } },
+      },
+      include: {
+        coach: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+          },
+        },
       },
     });
 

@@ -45,7 +45,7 @@ async function handleGetCalls(req: NextApiRequest, res: NextApiResponse) {
               select: {
                 id: true,
                 name: true,
-                phoneNumber: true,
+                phone: true,
               },
             },
             slot: true,
@@ -57,14 +57,13 @@ async function handleGetCalls(req: NextApiRequest, res: NextApiResponse) {
       },
     });
 
-    // Format the response to include all necessary information
     const formattedCalls = calls.map((call) => ({
       id: call.id,
       satisfaction: call.satisfaction,
       notes: call.notes,
       createdAt: call.createdAt,
       studentName: call.booking.student.name,
-      studentPhoneNumber: call.booking.student.phoneNumber,
+      studentPhone: call.booking.student.phone,
       slotDetails: {
         startTime: call.booking.slot.startTime,
         endTime: call.booking.slot.endTime,
@@ -108,7 +107,6 @@ async function handleCreateCall(req: NextApiRequest, res: NextApiResponse) {
   }
 
   try {
-    // Ensure the call hasn't already been recorded
     const existingCall = await prisma.call.findUnique({
       where: { bookingId: bookingIdNumber },
     });
@@ -119,7 +117,6 @@ async function handleCreateCall(req: NextApiRequest, res: NextApiResponse) {
         .json({ error: "Feedback for this call has already been recorded" });
     }
 
-    // Retrieve the booking
     const booking = await prisma.booking.findUnique({
       where: { id: bookingIdNumber },
       include: {
@@ -137,7 +134,6 @@ async function handleCreateCall(req: NextApiRequest, res: NextApiResponse) {
       });
     }
 
-    // Create the call record
     const call = await prisma.call.create({
       data: {
         booking: { connect: { id: bookingIdNumber } },
@@ -145,9 +141,36 @@ async function handleCreateCall(req: NextApiRequest, res: NextApiResponse) {
         satisfaction: satisfactionNumber,
         notes,
       },
+      include: {
+        booking: {
+          include: {
+            student: {
+              select: {
+                id: true,
+                name: true,
+                phone: true,
+              },
+            },
+            slot: true,
+          },
+        },
+      },
     });
 
-    res.status(201).json(call);
+    const formattedCall = {
+      id: call.id,
+      satisfaction: call.satisfaction,
+      notes: call.notes,
+      createdAt: call.createdAt,
+      studentName: call.booking.student.name,
+      studentPhone: call.booking.student.phone,
+      slotDetails: {
+        startTime: call.booking.slot.startTime,
+        endTime: call.booking.slot.endTime,
+      },
+    };
+
+    res.status(201).json(formattedCall);
   } catch (error) {
     console.error("Error recording call feedback:", error);
     res.status(500).json({ error: "Error recording call feedback" });
