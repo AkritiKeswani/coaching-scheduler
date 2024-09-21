@@ -1,3 +1,5 @@
+Note** In order to see how the slots booking works you will need to probably run the command for prisma since I am using that for DB related stuff - you can use -> npx prisma studio which should run on http://localhost:5555. Otherwise development server runs as usual just like any nextJS app! 
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
