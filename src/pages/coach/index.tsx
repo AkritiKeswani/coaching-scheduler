@@ -206,7 +206,7 @@ const CoachDashboard: NextPage = () => {
               type="datetime-local"
               value={newSlotStart}
               onChange={(e) => setNewSlotStart(e.target.value)}
-              className="flex-grow border rounded px-3 py-2"
+              className="flex-grow border rounded px-3 py-2 text-gray-800"
               disabled={isAddingSlot}
             />
             <button
@@ -240,7 +240,7 @@ const CoachDashboard: NextPage = () => {
                           Booked by: {slot.booking.student.name} (Phone:{" "}
                           {slot.booking.student.phone})
                         </p>
-                        <p className="text-xs text-gray-500 mt-1">
+                        <p className="text-xs text-gray-700 mt-1">
                           Note: Student phone numbers are shared for
                           communication purposes only.
                         </p>
@@ -250,7 +250,7 @@ const CoachDashboard: NextPage = () => {
                             min="1"
                             max="5"
                             placeholder="Satisfaction (1-5)"
-                            className="w-full border rounded px-3 py-2"
+                            className="w-full border rounded px-3 py-2 text-gray-800"
                             value={
                               feedback[slot.booking.id]?.satisfaction || ""
                             }
@@ -267,7 +267,7 @@ const CoachDashboard: NextPage = () => {
                           />
                           <textarea
                             placeholder="Notes"
-                            className="w-full border rounded px-3 py-2"
+                            className="w-full border rounded px-3 py-2 text-gray-800"
                             value={feedback[slot.booking.id]?.notes || ""}
                             onChange={(e) => {
                               const notes = e.target.value;
@@ -315,7 +315,7 @@ const CoachDashboard: NextPage = () => {
                       Student: {booking.student.name} (Phone:{" "}
                       {booking.student.phone})
                     </p>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-gray-700 mt-1">
                       Note: Student phone numbers are shared for communication
                       purposes only.
                     </p>
