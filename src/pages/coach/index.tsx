@@ -74,11 +74,17 @@ const CoachDashboard: NextPage = () => {
     setError(null);
     try {
       const response = await fetch(`/api/slots?coachId=${user?.id}`);
-      if (!response.ok) throw new Error("Failed to fetch slots");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.error || `HTTP error! status: ${response.status}`
+        );
+      }
       const data = await response.json();
       setSlots(data);
     } catch (err) {
-      setError("Failed to fetch slots. Please try again.");
+      console.error("Error fetching slots:", err);
+      setError(`Failed to fetch slots. ${err.message}`);
     } finally {
       setIsFetchingSlots(false);
     }
@@ -89,11 +95,17 @@ const CoachDashboard: NextPage = () => {
     setError(null);
     try {
       const response = await fetch(`/api/bookings?coachId=${user?.id}`);
-      if (!response.ok) throw new Error("Failed to fetch bookings");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.error || `HTTP error! status: ${response.status}`
+        );
+      }
       const data = await response.json();
       setBookings(data);
     } catch (err) {
-      setError("Failed to fetch bookings. Please try again.");
+      console.error("Error fetching bookings:", err);
+      setError(`Failed to fetch bookings. ${err.message}`);
     } finally {
       setIsFetchingBookings(false);
     }
@@ -113,11 +125,15 @@ const CoachDashboard: NextPage = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ startTime: newSlotStart, coachId: user?.id }),
       });
-      if (!response.ok) throw new Error("Failed to add slot");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to add slot");
+      }
       await fetchSlots();
       setNewSlotStart("");
     } catch (err) {
-      setError("Failed to add slot. Please try again.");
+      console.error("Error adding slot:", err);
+      setError(`Failed to add slot. ${err.message}`);
     } finally {
       setIsAddingSlot(false);
     }
@@ -159,9 +175,8 @@ const CoachDashboard: NextPage = () => {
         return updated;
       });
     } catch (err) {
-      setError(
-        err.message || "Failed to record satisfaction. Please try again."
-      );
+      console.error("Error recording satisfaction:", err);
+      setError(`Failed to record satisfaction. ${err.message}`);
     }
   };
 

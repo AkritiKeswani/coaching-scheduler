@@ -1,5 +1,3 @@
-// pages/api/bookings.ts
-
 import { NextApiRequest, NextApiResponse } from "next";
 import prisma from "../../lib/prisma";
 
@@ -21,7 +19,60 @@ export default async function handler(
 }
 
 async function handleGetBookings(req: NextApiRequest, res: NextApiResponse) {
-  // ... (existing code remains the same)
+  const { studentId, coachId } = req.query;
+
+  if (!studentId && !coachId) {
+    return res
+      .status(400)
+      .json({ error: "Either studentId or coachId is required" });
+  }
+
+  let where = {};
+  if (studentId) {
+    const studentIdNumber = parseInt(studentId as string, 10);
+    if (isNaN(studentIdNumber)) {
+      return res.status(400).json({ error: "Invalid studentId" });
+    }
+    where = { studentId: studentIdNumber };
+  } else if (coachId) {
+    const coachIdNumber = parseInt(coachId as string, 10);
+    if (isNaN(coachIdNumber)) {
+      return res.status(400).json({ error: "Invalid coachId" });
+    }
+    where = { slot: { coachId: coachIdNumber } };
+  }
+
+  try {
+    const bookings = await prisma.booking.findMany({
+      where,
+      include: {
+        slot: {
+          include: {
+            coach: {
+              select: {
+                id: true,
+                name: true,
+                phone: true,
+              },
+            },
+          },
+        },
+        student: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+          },
+        },
+        call: true,
+      },
+    });
+
+    res.status(200).json(bookings);
+  } catch (error) {
+    console.error("Error fetching bookings:", error);
+    res.status(500).json({ error: "Error fetching bookings" });
+  }
 }
 
 async function handleCreateBooking(req: NextApiRequest, res: NextApiResponse) {
@@ -96,18 +147,25 @@ async function handleCreateBooking(req: NextApiRequest, res: NextApiResponse) {
       }),
     ]);
 
-    // Return booking details including phone numbers
+    // Return booking details in the same format as GET request
     res.status(201).json({
       id: booking.id,
-      coachName: booking.slot.coach.name,
-      coachPhone: booking.slot.coach.phone,
-      studentName: booking.student.name,
-      studentPhone: booking.student.phone,
-      slotDetails: {
+      slot: {
         id: booking.slot.id,
         startTime: booking.slot.startTime,
         endTime: booking.slot.endTime,
+        coach: {
+          id: booking.slot.coach.id,
+          name: booking.slot.coach.name,
+          phone: booking.slot.coach.phone,
+        },
       },
+      student: {
+        id: booking.student.id,
+        name: booking.student.name,
+        phone: booking.student.phone,
+      },
+      call: null, // Since this is a new booking, there's no call data yet
     });
   } catch (error) {
     console.error("Error creating booking:", error);

@@ -1,7 +1,8 @@
 import { NextPage } from "next";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useUser } from "../../contexts/UserContext";
 import { useRouter } from "next/router";
+import useSWR from "swr";
 
 interface Slot {
   id: number;
@@ -29,9 +30,29 @@ interface Booking {
   };
 }
 
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
+
 const StudentDashboard: NextPage = () => {
   const { user, setUser } = useUser();
   const router = useRouter();
+
+  const { data: availableSlots, error: slotsError } = useSWR<Slot[]>(
+    user && !user.isCoach ? "/api/slots?isBooked=false" : null,
+    fetcher
+  );
+
+  const {
+    data: bookings,
+    error: bookingsError,
+    mutate: mutateBookings,
+  } = useSWR<Booking[]>(
+    user && !user.isCoach ? `/api/bookings?studentId=${user?.id}` : null,
+    fetcher
+  );
+
+  const [error, setError] = useState<string | null>(null);
+  const [newPhoneNumber, setNewPhoneNumber] = useState("");
+  const [isUpdatingPhone, setIsUpdatingPhone] = useState(false);
 
   const switchToCoach = () => {
     setUser({
@@ -42,53 +63,6 @@ const StudentDashboard: NextPage = () => {
       isCoach: true,
     });
     router.push("/coach");
-  };
-
-  const [availableSlots, setAvailableSlots] = useState<Slot[]>([]);
-  const [bookings, setBookings] = useState<Booking[]>([]);
-  const [isFetchingSlots, setIsFetchingSlots] = useState(false);
-  const [isFetchingBookings, setIsFetchingBookings] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [newPhoneNumber, setNewPhoneNumber] = useState("");
-  const [isUpdatingPhone, setIsUpdatingPhone] = useState(false);
-
-  useEffect(() => {
-    if (user && !user.isCoach) {
-      fetchAvailableSlots();
-      fetchBookings();
-    }
-  }, [user]);
-
-  const fetchAvailableSlots = async () => {
-    setIsFetchingSlots(true);
-    setError(null);
-    try {
-      const response = await fetch("/api/slots?isBooked=false");
-      if (!response.ok) throw new Error("Failed to fetch available slots");
-      const data = await response.json();
-      setAvailableSlots(data);
-    } catch (err) {
-      console.error(err);
-      setError("Failed to fetch available slots. Please try again.");
-    } finally {
-      setIsFetchingSlots(false);
-    }
-  };
-
-  const fetchBookings = async () => {
-    setIsFetchingBookings(true);
-    setError(null);
-    try {
-      const response = await fetch(`/api/bookings?studentId=${user?.id}`);
-      if (!response.ok) throw new Error("Failed to fetch bookings");
-      const data = await response.json();
-      setBookings(data);
-    } catch (err) {
-      console.error(err);
-      setError("Failed to fetch bookings. Please try again.");
-    } finally {
-      setIsFetchingBookings(false);
-    }
   };
 
   const bookSlot = async (slotId: number) => {
@@ -106,8 +80,7 @@ const StudentDashboard: NextPage = () => {
         const errorData = await response.json();
         throw new Error(errorData.error || "Failed to book slot");
       }
-      await fetchAvailableSlots();
-      await fetchBookings();
+      mutateBookings();
     } catch (err) {
       console.error(err);
       setError(err.message || "Failed to book slot. Please try again.");
@@ -206,8 +179,12 @@ const StudentDashboard: NextPage = () => {
               <h2 className="text-xl font-semibold mb-4 text-gray-700">
                 Available Slots
               </h2>
-              {isFetchingSlots ? (
+              {!availableSlots && !slotsError ? (
                 <div className="text-gray-600">Loading available slots...</div>
+              ) : slotsError ? (
+                <div className="text-red-600">
+                  Error loading available slots
+                </div>
               ) : (
                 <ul className="space-y-4">
                   {availableSlots.map((slot) => (
@@ -235,8 +212,10 @@ const StudentDashboard: NextPage = () => {
               <h2 className="text-xl font-semibold mb-4 text-gray-700">
                 Your Bookings
               </h2>
-              {isFetchingBookings ? (
+              {!bookings && !bookingsError ? (
                 <div className="text-gray-600">Loading your bookings...</div>
+              ) : bookingsError ? (
+                <div className="text-red-600">Error loading your bookings</div>
               ) : (
                 <ul className="space-y-4">
                   {bookings.map((booking) => (
