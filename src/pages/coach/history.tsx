@@ -1,5 +1,3 @@
-// pages/coach/history.tsx
-
 import { GetServerSideProps } from "next";
 import { prisma } from "../../lib/prisma";
 import { useSession, getSession } from "next-auth/client";
@@ -40,11 +38,10 @@ export default function FeedbackHistory({ callsWithFeedback }) {
 export const getServerSideProps: GetServerSideProps = async (context) => {
   const session = await getSession(context);
 
-  // Redirect if not authenticated or not a coach
   if (!session || !session.user.isCoach) {
     return {
       redirect: {
-        destination: "/", // or a login page
+        destination: "/",
         permanent: false,
       },
     };
@@ -52,7 +49,6 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 
   const coachId = session.user.id;
 
-  // Fetch calls with feedback
   const callsWithFeedback = await prisma.call.findMany({
     where: {
       coachId: coachId,

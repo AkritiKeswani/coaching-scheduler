@@ -187,14 +187,12 @@ const CoachDashboard: NextPage = () => {
         })
       );
 
-      // Clear the feedback form
       setFeedback((prev) => {
         const updated = { ...prev };
         delete updated[bookingId];
         return updated;
       });
 
-      // Re-fetch bookings to ensure all data is up to date
       await fetchBookings();
     } catch (err) {
       console.error("Error recording satisfaction:", err);

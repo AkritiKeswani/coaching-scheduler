@@ -44,7 +44,6 @@ async function handleCreateCall(req: NextApiRequest, res: NextApiResponse) {
   }
 
   try {
-    // Check if the booking exists and belongs to the coach
     const booking = await prisma.booking.findUnique({
       where: { id: bookingIdNumber },
       include: { slot: true },
@@ -60,7 +59,6 @@ async function handleCreateCall(req: NextApiRequest, res: NextApiResponse) {
         .json({ error: "This booking does not belong to the coach" });
     }
 
-    // Check if a call already exists for this booking
     const existingCall = await prisma.call.findUnique({
       where: { bookingId: bookingIdNumber },
     });
@@ -71,7 +69,6 @@ async function handleCreateCall(req: NextApiRequest, res: NextApiResponse) {
         .json({ error: "Feedback has already been recorded for this booking" });
     }
 
-    // Create the call record
     const call = await prisma.call.create({
       data: {
         booking: { connect: { id: bookingIdNumber } },

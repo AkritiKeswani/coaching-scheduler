@@ -64,11 +64,11 @@ async function handleGetBookings(req: NextApiRequest, res: NextApiResponse) {
             phone: true,
           },
         },
-        call: true, // Include call information
+        call: true,
       },
       orderBy: {
         slot: {
-          startTime: "desc", // Order by start time, most recent first
+          startTime: "desc",
         },
       },
     });
@@ -95,7 +95,6 @@ async function handleCreateBooking(req: NextApiRequest, res: NextApiResponse) {
   }
 
   try {
-    // Check if the slot exists and is available
     const slot = await prisma.slot.findUnique({
       where: { id: slotIdNumber },
       include: { coach: true },
@@ -109,7 +108,6 @@ async function handleCreateBooking(req: NextApiRequest, res: NextApiResponse) {
       return res.status(400).json({ error: "Slot is already booked" });
     }
 
-    // Check if the student exists
     const student = await prisma.user.findUnique({
       where: { id: studentIdNumber },
     });
@@ -118,7 +116,6 @@ async function handleCreateBooking(req: NextApiRequest, res: NextApiResponse) {
       return res.status(404).json({ error: "Student not found" });
     }
 
-    // Use a transaction to ensure atomicity
     const [booking] = await prisma.$transaction([
       prisma.booking.create({
         data: {
@@ -169,7 +166,7 @@ async function handleCreateBooking(req: NextApiRequest, res: NextApiResponse) {
         name: booking.student.name,
         phone: booking.student.phone,
       },
-      call: null, // New bookings don't have a call yet
+      call: null,
     });
   } catch (error) {
     console.error("Error creating booking:", error);

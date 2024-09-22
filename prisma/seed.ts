@@ -1,15 +1,11 @@
-// prisma/seed.ts
-
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 async function main() {
-  // Create Test Coach
   const testCoach = await prisma.user.upsert({
     where: { email: "coach@example.com" },
     update: {},
     create: {
-      // id: 1, // Remove explicit ID assignment
       name: "Test Coach",
       email: "coach@example.com",
       phone: "123-456-7890",
@@ -17,12 +13,10 @@ async function main() {
     },
   });
 
-  // Create Test Student
   const testStudent = await prisma.user.upsert({
     where: { email: "student@example.com" },
     update: {},
     create: {
-      // id: 2, // Remove explicit ID assignment
       name: "Test Student",
       email: "student@example.com",
       phone: "098-765-4321",
@@ -30,8 +24,6 @@ async function main() {
     },
   });
 
-  // Optionally, keep existing users
-  // Create Coach Alice
   const coachAlice = await prisma.user.upsert({
     where: { email: "alice@example.com" },
     update: {},
@@ -43,7 +35,6 @@ async function main() {
     },
   });
 
-  // Create Coach Bob
   const coachBob = await prisma.user.upsert({
     where: { email: "bob@example.com" },
     update: {},
@@ -55,7 +46,6 @@ async function main() {
     },
   });
 
-  // Create Student Charlie
   const studentCharlie = await prisma.user.upsert({
     where: { email: "charlie@example.com" },
     update: {},
@@ -67,7 +57,6 @@ async function main() {
     },
   });
 
-  // Create Student Diana
   const studentDiana = await prisma.user.upsert({
     where: { email: "diana@example.com" },
     update: {},

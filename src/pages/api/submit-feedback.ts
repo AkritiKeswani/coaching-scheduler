@@ -1,5 +1,3 @@
-// pages/api/submit-feedback.ts
-
 import { NextApiRequest, NextApiResponse } from "next";
 import { prisma } from "../../../lib/prisma";
 import { getSession } from "next-auth/client";
@@ -21,7 +19,6 @@ export default async function handler(
   const { callId, satisfaction, notes } = req.body;
   const coachId = session.user.id;
 
-  // Validate input
   if (
     !callId ||
     !satisfaction ||
@@ -33,7 +30,6 @@ export default async function handler(
   }
 
   try {
-    // Verify that the call exists and belongs to the coach
     const call = await prisma.call.findUnique({
       where: { id: callId },
     });
@@ -42,7 +38,6 @@ export default async function handler(
       return res.status(403).json({ error: "Unauthorized" });
     }
 
-    // Update the call record with feedback
     await prisma.call.update({
       where: { id: callId },
       data: {

@@ -1,5 +1,3 @@
-// pages/coach/add-slot.tsx
-
 import { NextPage } from "next";
 import { useState } from "react";
 import { useUser } from "../../contexts/UserContext";
