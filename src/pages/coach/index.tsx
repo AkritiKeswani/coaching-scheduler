@@ -3,6 +3,12 @@ import { useState, useEffect } from "react";
 import { useUser } from "../../contexts/UserContext";
 import { useRouter } from "next/router";
 
+interface Call {
+  id: number;
+  satisfaction: number;
+  notes: string;
+}
+
 interface Booking {
   id: number;
   slot: {
@@ -20,11 +26,7 @@ interface Booking {
     name: string;
     phone: string;
   };
-  call?: {
-    id: number;
-    satisfaction: number;
-    notes: string;
-  };
+  call?: Call;
 }
 
 interface Slot {
@@ -168,12 +170,32 @@ const CoachDashboard: NextPage = () => {
         const errorData = await response.json();
         throw new Error(errorData.error || "Failed to record satisfaction");
       }
-      await fetchBookings();
+
+      // Update local state
+      setSlots((prevSlots) =>
+        prevSlots.map((slot) => {
+          if (slot.booking && slot.booking.id === bookingId) {
+            return {
+              ...slot,
+              booking: {
+                ...slot.booking,
+                call: { id: Date.now(), satisfaction, notes },
+              },
+            };
+          }
+          return slot;
+        })
+      );
+
+      // Clear the feedback form
       setFeedback((prev) => {
         const updated = { ...prev };
         delete updated[bookingId];
         return updated;
       });
+
+      // Re-fetch bookings to ensure all data is up to date
+      await fetchBookings();
     } catch (err) {
       console.error("Error recording satisfaction:", err);
       setError(`Failed to record satisfaction. ${err.message}`);
@@ -259,49 +281,60 @@ const CoachDashboard: NextPage = () => {
                           Note: Student phone numbers are shared for
                           communication purposes only.
                         </p>
-                        <div className="mt-2 space-y-2">
-                          <input
-                            type="number"
-                            min="1"
-                            max="5"
-                            placeholder="Satisfaction (1-5)"
-                            className="w-full border rounded px-3 py-2 text-gray-800"
-                            value={
-                              feedback[slot.booking.id]?.satisfaction || ""
-                            }
-                            onChange={(e) => {
-                              const satisfaction = parseInt(e.target.value);
-                              setFeedback({
-                                ...feedback,
-                                [slot.booking!.id]: {
-                                  ...feedback[slot.booking!.id],
-                                  satisfaction,
-                                },
-                              });
-                            }}
-                          />
-                          <textarea
-                            placeholder="Notes"
-                            className="w-full border rounded px-3 py-2 text-gray-800"
-                            value={feedback[slot.booking.id]?.notes || ""}
-                            onChange={(e) => {
-                              const notes = e.target.value;
-                              setFeedback({
-                                ...feedback,
-                                [slot.booking!.id]: {
-                                  ...feedback[slot.booking!.id],
-                                  notes,
-                                },
-                              });
-                            }}
-                          />
-                          <button
-                            onClick={() => recordSatisfaction(slot.booking!.id)}
-                            className="w-full bg-black hover:bg-gray-800 text-white font-medium py-2 px-4 rounded transition duration-300"
-                          >
-                            Record Feedback
-                          </button>
-                        </div>
+                        {slot.booking.call ? (
+                          <div className="mt-2 text-sm">
+                            <p>
+                              Satisfaction: {slot.booking.call.satisfaction}/5
+                            </p>
+                            <p>Notes: {slot.booking.call.notes}</p>
+                          </div>
+                        ) : (
+                          <div className="mt-2 space-y-2">
+                            <input
+                              type="number"
+                              min="1"
+                              max="5"
+                              placeholder="Satisfaction (1-5)"
+                              className="w-full border rounded px-3 py-2 text-gray-800"
+                              value={
+                                feedback[slot.booking.id]?.satisfaction || ""
+                              }
+                              onChange={(e) => {
+                                const satisfaction = parseInt(e.target.value);
+                                setFeedback({
+                                  ...feedback,
+                                  [slot.booking.id]: {
+                                    ...feedback[slot.booking.id],
+                                    satisfaction,
+                                  },
+                                });
+                              }}
+                            />
+                            <textarea
+                              placeholder="Notes"
+                              className="w-full border rounded px-3 py-2 text-gray-800"
+                              value={feedback[slot.booking.id]?.notes || ""}
+                              onChange={(e) => {
+                                const notes = e.target.value;
+                                setFeedback({
+                                  ...feedback,
+                                  [slot.booking.id]: {
+                                    ...feedback[slot.booking.id],
+                                    notes,
+                                  },
+                                });
+                              }}
+                            />
+                            <button
+                              onClick={() =>
+                                recordSatisfaction(slot.booking.id)
+                              }
+                              className="w-full bg-black hover:bg-gray-800 text-white font-medium py-2 px-4 rounded transition duration-300"
+                            >
+                              Record Feedback
+                            </button>
+                          </div>
+                        )}
                       </div>
                     ) : (
                       <span className="text-sm text-green-600">Available</span>

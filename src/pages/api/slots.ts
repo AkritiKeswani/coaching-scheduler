@@ -1,5 +1,3 @@
-// pages/api/slots.ts
-
 import { NextApiRequest, NextApiResponse } from "next";
 import prisma from "../../lib/prisma";
 
@@ -21,26 +19,25 @@ export default async function handler(
 }
 
 async function handleGetSlots(req: NextApiRequest, res: NextApiResponse) {
-  let coachId = req.query.coachId;
-  let isBooked = req.query.isBooked;
+  const { coachId, isBooked } = req.query;
 
-  if (Array.isArray(coachId)) coachId = coachId[0];
-  if (Array.isArray(isBooked)) isBooked = isBooked[0];
+  let where: any = {};
 
-  const coachIdNumber = coachId ? parseInt(coachId, 10) : undefined;
-  const isBookedBoolean =
-    isBooked !== undefined ? isBooked === "true" : undefined;
+  if (coachId) {
+    const coachIdNumber = parseInt(coachId as string, 10);
+    if (isNaN(coachIdNumber)) {
+      return res.status(400).json({ error: "Invalid coachId" });
+    }
+    where.coachId = coachIdNumber;
+  }
 
-  if (coachId && isNaN(coachIdNumber)) {
-    return res.status(400).json({ error: "Invalid coachId" });
+  if (isBooked !== undefined) {
+    where.isBooked = isBooked === "true";
   }
 
   try {
     const slots = await prisma.slot.findMany({
-      where: {
-        ...(coachIdNumber !== undefined && { coachId: coachIdNumber }),
-        ...(isBookedBoolean !== undefined && { isBooked: isBookedBoolean }),
-      },
+      where,
       include: {
         coach: {
           select: {
@@ -61,6 +58,9 @@ async function handleGetSlots(req: NextApiRequest, res: NextApiResponse) {
           },
         },
       },
+      orderBy: {
+        startTime: "asc",
+      },
     });
 
     res.status(200).json(slots);
@@ -73,18 +73,10 @@ async function handleGetSlots(req: NextApiRequest, res: NextApiResponse) {
 async function handleCreateSlot(req: NextApiRequest, res: NextApiResponse) {
   const { startTime, coachId } = req.body;
 
-  if (!startTime) {
-    return res.status(400).json({ error: "startTime is required" });
-  }
-
-  if (!coachId) {
-    return res.status(400).json({ error: "coachId is required" });
-  }
-
-  const start = new Date(startTime);
-
-  if (isNaN(start.getTime())) {
-    return res.status(400).json({ error: "Invalid startTime format" });
+  if (!startTime || !coachId) {
+    return res
+      .status(400)
+      .json({ error: "startTime and coachId are required" });
   }
 
   const coachIdNumber = parseInt(coachId, 10);
@@ -94,21 +86,13 @@ async function handleCreateSlot(req: NextApiRequest, res: NextApiResponse) {
   }
 
   try {
-    // Check if the coach exists and is a coach
-    const coachExists = await prisma.user.findUnique({
-      where: { id: coachIdNumber },
-    });
+    const startDateTime = new Date(startTime);
+    const endDateTime = new Date(startDateTime.getTime() + 2 * 60 * 60 * 1000); // 2 hours later
 
-    if (!coachExists || !coachExists.isCoach) {
-      return res.status(404).json({ error: "Coach not found" });
-    }
-
-    const end = new Date(start.getTime() + 2 * 60 * 60 * 1000); // Add 2 hours
-
-    const slot = await prisma.slot.create({
+    const newSlot = await prisma.slot.create({
       data: {
-        startTime: start,
-        endTime: end,
+        startTime: startDateTime,
+        endTime: endDateTime,
         coach: { connect: { id: coachIdNumber } },
       },
       include: {
@@ -122,7 +106,7 @@ async function handleCreateSlot(req: NextApiRequest, res: NextApiResponse) {
       },
     });
 
-    res.status(201).json(slot);
+    res.status(201).json(newSlot);
   } catch (error) {
     console.error("Error creating slot:", error);
     res.status(500).json({ error: "Error creating slot" });

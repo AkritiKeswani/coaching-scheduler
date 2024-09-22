@@ -64,7 +64,12 @@ async function handleGetBookings(req: NextApiRequest, res: NextApiResponse) {
             phone: true,
           },
         },
-        call: true,
+        call: true, // Include call information
+      },
+      orderBy: {
+        slot: {
+          startTime: "desc", // Order by start time, most recent first
+        },
       },
     });
 
@@ -147,7 +152,6 @@ async function handleCreateBooking(req: NextApiRequest, res: NextApiResponse) {
       }),
     ]);
 
-    // Return booking details in the same format as GET request
     res.status(201).json({
       id: booking.id,
       slot: {
@@ -165,7 +169,7 @@ async function handleCreateBooking(req: NextApiRequest, res: NextApiResponse) {
         name: booking.student.name,
         phone: booking.student.phone,
       },
-      call: null, // Since this is a new booking, there's no call data yet
+      call: null, // New bookings don't have a call yet
     });
   } catch (error) {
     console.error("Error creating booking:", error);

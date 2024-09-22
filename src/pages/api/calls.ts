@@ -1,5 +1,3 @@
-// pages/api/calls.ts
-
 import { NextApiRequest, NextApiResponse } from "next";
 import prisma from "../../lib/prisma";
 
@@ -10,80 +8,19 @@ export default async function handler(
   const { method } = req;
 
   switch (method) {
-    case "GET":
-      return handleGetCalls(req, res);
     case "POST":
       return handleCreateCall(req, res);
     default:
-      res.setHeader("Allow", ["GET", "POST"]);
+      res.setHeader("Allow", ["POST"]);
       res.status(405).end(`Method ${method} Not Allowed`);
-  }
-}
-
-async function handleGetCalls(req: NextApiRequest, res: NextApiResponse) {
-  let coachId = req.query.coachId;
-
-  if (Array.isArray(coachId)) coachId = coachId[0];
-
-  if (!coachId) {
-    return res.status(400).json({ error: "coachId is required" });
-  }
-
-  const coachIdNumber = parseInt(coachId, 10);
-
-  if (isNaN(coachIdNumber)) {
-    return res.status(400).json({ error: "Invalid coachId" });
-  }
-
-  try {
-    const calls = await prisma.call.findMany({
-      where: { coachId: coachIdNumber },
-      include: {
-        booking: {
-          include: {
-            student: {
-              select: {
-                id: true,
-                name: true,
-                phone: true,
-              },
-            },
-            slot: true,
-          },
-        },
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
-
-    const formattedCalls = calls.map((call) => ({
-      id: call.id,
-      satisfaction: call.satisfaction,
-      notes: call.notes,
-      createdAt: call.createdAt,
-      studentName: call.booking.student.name,
-      studentPhone: call.booking.student.phone,
-      slotDetails: {
-        startTime: call.booking.slot.startTime,
-        endTime: call.booking.slot.endTime,
-      },
-    }));
-
-    res.status(200).json(formattedCalls);
-  } catch (error) {
-    console.error("Error fetching calls:", error);
-    res.status(500).json({ error: "Error fetching calls" });
   }
 }
 
 async function handleCreateCall(req: NextApiRequest, res: NextApiResponse) {
   const { bookingId, coachId, satisfaction, notes } = req.body;
 
-  if (!bookingId || !coachId || satisfaction === undefined || !notes) {
-    return res.status(400).json({
-      error: "bookingId, coachId, satisfaction, and notes are required",
-    });
+  if (!bookingId || !coachId || !satisfaction || !notes) {
+    return res.status(400).json({ error: "All fields are required" });
   }
 
   const bookingIdNumber = parseInt(bookingId, 10);
@@ -107,21 +44,10 @@ async function handleCreateCall(req: NextApiRequest, res: NextApiResponse) {
   }
 
   try {
-    const existingCall = await prisma.call.findUnique({
-      where: { bookingId: bookingIdNumber },
-    });
-
-    if (existingCall) {
-      return res
-        .status(400)
-        .json({ error: "Feedback for this call has already been recorded" });
-    }
-
+    // Check if the booking exists and belongs to the coach
     const booking = await prisma.booking.findUnique({
       where: { id: bookingIdNumber },
-      include: {
-        slot: true,
-      },
+      include: { slot: true },
     });
 
     if (!booking) {
@@ -129,11 +55,23 @@ async function handleCreateCall(req: NextApiRequest, res: NextApiResponse) {
     }
 
     if (booking.slot.coachId !== coachIdNumber) {
-      return res.status(403).json({
-        error: "You are not authorized to record feedback for this call",
-      });
+      return res
+        .status(403)
+        .json({ error: "This booking does not belong to the coach" });
     }
 
+    // Check if a call already exists for this booking
+    const existingCall = await prisma.call.findUnique({
+      where: { bookingId: bookingIdNumber },
+    });
+
+    if (existingCall) {
+      return res
+        .status(400)
+        .json({ error: "Feedback has already been recorded for this booking" });
+    }
+
+    // Create the call record
     const call = await prisma.call.create({
       data: {
         booking: { connect: { id: bookingIdNumber } },
@@ -144,35 +82,33 @@ async function handleCreateCall(req: NextApiRequest, res: NextApiResponse) {
       include: {
         booking: {
           include: {
-            student: {
-              select: {
-                id: true,
-                name: true,
-                phone: true,
-              },
-            },
             slot: true,
+            student: true,
           },
         },
       },
     });
 
-    const formattedCall = {
+    res.status(201).json({
       id: call.id,
       satisfaction: call.satisfaction,
       notes: call.notes,
-      createdAt: call.createdAt,
-      studentName: call.booking.student.name,
-      studentPhone: call.booking.student.phone,
-      slotDetails: {
-        startTime: call.booking.slot.startTime,
-        endTime: call.booking.slot.endTime,
+      date: call.date,
+      booking: {
+        id: call.booking.id,
+        slot: {
+          id: call.booking.slot.id,
+          startTime: call.booking.slot.startTime,
+          endTime: call.booking.slot.endTime,
+        },
+        student: {
+          id: call.booking.student.id,
+          name: call.booking.student.name,
+        },
       },
-    };
-
-    res.status(201).json(formattedCall);
+    });
   } catch (error) {
-    console.error("Error recording call feedback:", error);
-    res.status(500).json({ error: "Error recording call feedback" });
+    console.error("Error creating call:", error);
+    res.status(500).json({ error: "Error creating call" });
   }
 }
